@@ -10,12 +10,14 @@ class TestLoginCourier:
     @allure.description("Проверяется, что при передаче данных зарегистрированного курьера, курьер успешно авторизуется. По окончанию проверки задействуется код очистки данных.")
     def test_successful_authorization_courier(self, setup_courier_for_cleanup):
         payload = setup_courier_for_cleanup
-        response_auth = requests.post(
-            f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
-            json={"login": payload["login"], "password": payload["password"]}
-        )
-        assert response_auth.status_code == 200
-        assert isinstance(response_auth.json()['id'], int)
+        with allure.step(f"Отправить POST-запрос на авторизацию курьера по адресу {Url.MAIN_URL}{Url.LOGIN_COURIER} с логином '{payload['login']}' и паролем"):
+            response_auth = requests.post(
+                f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
+                json={"login": payload["login"], "password": payload["password"]}
+            )
+        with allure.step("Проверить код ответа 200 и наличие 'id' в теле"):
+            assert response_auth.status_code == 200
+            assert isinstance(response_auth.json()['id'], int)
 
     @allure.title("Проверка авторизации курьера без обязательных полей (логин/пароль)")
     @allure.description("Проверяется, что при отсутствии обязательного поля ('login' или 'password'), система возвращает код 400.")
@@ -29,12 +31,14 @@ class TestLoginCourier:
             "password": payload["password"]
         }
         auth_data.pop(missing_field)
-        response_auth = requests.post(
-            f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
-            json=auth_data
-        )
-        assert response_auth.status_code == 400
-        assert response_auth.json()['message'] == ResponseMessages.COURIER_NOT_LOGIN_DATA
+        with allure.step(f"Отправить POST-запрос на авторизацию курьера по адресу {Url.MAIN_URL}{Url.LOGIN_COURIER} с отсутствующим полем '{missing_field}'"):
+            response_auth = requests.post(
+                f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
+                json=auth_data
+            )
+        with allure.step("Проверить код ответа 400 и сообщение об ошибке"):
+            assert response_auth.status_code == 400
+            assert response_auth.json()['message'] == ResponseMessages.COURIER_NOT_LOGIN_DATA
 
     @allure.title("Проверка авторизации курьера с указанием неправильного обязательного поля (логин/пароль)")
     @allure.description("Проверяется, что при передаче неверного обязательного поля ('login' или 'password'), система возвращает код 404.")
@@ -46,9 +50,11 @@ class TestLoginCourier:
             "password": payload["password"]
         }
         auth_data[wrong_field] += "w"
-        response_auth = requests.post(
-            f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
-            json=auth_data
-        )
-        assert response_auth.status_code == 404
-        assert response_auth.json()['message'] == ResponseMessages.COURIER_NOT_FOUND
+        with allure.step(f"Отправить POST-запрос на авторизацию курьера по адресу {Url.MAIN_URL}{Url.LOGIN_COURIER} с неверным полем '{wrong_field}'"):
+            response_auth = requests.post(
+                f'{Url.MAIN_URL}{Url.LOGIN_COURIER}',
+                json=auth_data
+            )
+        with allure.step("Проверить код ответа 404 и сообщение об ошибке"):
+            assert response_auth.status_code == 404
+            assert response_auth.json()['message'] == ResponseMessages.COURIER_NOT_FOUND
